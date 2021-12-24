@@ -1,15 +1,7 @@
-import * as yup from 'yup';
+import i18next from 'i18next';
 import initView from './view.js';
-
-const validateUrl = (url, feeds) => {
-  const schema = yup
-    .string()
-    .required()
-    .url('Ссылка должна быть валидным URL')
-    .notOneOf(feeds, 'RSS уже существует');
-
-  return schema.validate(url);
-};
+import ru from './locales/ru.js';
+import validateUrl from './validator.js';
 
 export default () => {
   const elements = {
@@ -24,7 +16,14 @@ export default () => {
     },
     feeds: [],
   };
-
+  const i18n = i18next.createInstance();
+  i18n.init({
+    lng: 'ru',
+    debug: true,
+    resources: {
+      ru,
+    },
+  });
   const watchedState = initView(state);
 
   elements.form.addEventListener('submit', (e) => {
@@ -32,7 +31,7 @@ export default () => {
     const input = e.target.elements.url;
     const url = input.value;
     watchedState.rssForm.state = 'filling';
-    validateUrl(url, state.feeds)
+    validateUrl(url, state.feeds, i18n)
       .then((validUrl) => {
         watchedState.rssForm.error = null;
         watchedState.rssForm.state = 'processing';
