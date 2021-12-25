@@ -35,6 +35,8 @@ export default () => {
     form: document.querySelector('form'),
     input: document.querySelector('#url-input'),
     feedbackContainer: document.querySelector('.feedback'),
+    postsContainer: document.querySelector('.posts'),
+    feedsContainer: document.querySelector('.feeds'),
   };
   const state = {
     rssForm: {
@@ -52,7 +54,7 @@ export default () => {
       ru,
     },
   });
-  const watchedState = initView(state, i18n);
+  const watchedState = initView(state, elements, i18n);
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -67,35 +69,28 @@ export default () => {
         console.log(state);
         return validUrl;
       })
-      .then((feedUrl) => {
-        axios.get(`https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${feedUrl}`)
-          .then((response) => {
-            const parsedXml = parseXml(response.data.contents);
-            console.log(parsedXml);
-            const feedId = _.uniqueId();
-            const newFeed = {
-              id: feedId,
-              url,
-              ...getFeedData(parsedXml),
-            };
-            const newPosts = getPostsData(parsedXml)
-              .map((post) => ({ id: _.uniqueId(), feedId, ...post }));
-            console.log(newPosts);
-            watchedState.feeds = [newFeed, ...state.feeds];
-            watchedState.posts = [newPosts, ...state.posts];
-            watchedState.rssForm.state = 'success';
-            console.log(state);
-          })
-          .catch((err) => {
-            watchedState.rssForm.error = err.isAxiosError
-              ? i18n.t('form.errors.networkProblems')
-              : i18n.t(err.message);
-            watchedState.rssForm.state = 'filling';
-          });
+      .then((feedUrl) => axios.get(`https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${feedUrl}`))
+      .then(({ data }) => {
+        const parsedXml = parseXml(data.contents);
+        console.dir(parsedXml);
+        const feedId = _.uniqueId();
+        const newFeed = {
+          id: feedId,
+          url,
+          ...getFeedData(parsedXml),
+        };
+        const newPosts = getPostsData(parsedXml)
+          .map((post) => ({ id: _.uniqueId(), feedId, ...post }));
+        console.log(newPosts);
+        watchedState.feeds = [newFeed, ...state.feeds];
+        watchedState.posts = [...newPosts, ...state.posts];
+        watchedState.rssForm.state = 'success';
+        console.log(state);
       })
       .catch((err) => {
-        console.dir(err);
-        watchedState.rssForm.error = err.message;
+        watchedState.rssForm.error = err.isAxiosError
+          ? 'form.errors.networkProblems'
+          : err.message;
         watchedState.rssForm.state = 'filling';
         console.log(state);
       });

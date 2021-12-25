@@ -1,24 +1,87 @@
+/* eslint-disable no-param-reassign */
 import onChange from 'on-change';
 
-const elements = {
-  form: document.querySelector('form'),
-  input: document.querySelector('#url-input'),
-  feedbackContainer: document.querySelector('.feedback'),
+const renderFeeds = (feeds, elements, i18n) => {
+  const feedsList = feeds.map(({ title, description }) => {
+    const html = `
+    <li class="list-group-item border-0 border-end-0">
+      <h3 class="h6 m-0">${title}</h3>
+      <p class="m-0 small text-black-50">${description}</p>
+    </li>
+    `;
+    return html;
+  });
+
+  const html = `
+    <div class="card border-0">
+      <div class="card-body">
+        <h2 class="card-title h4">${i18n.t('feeds.title')}</h2>
+      </div>
+      <ul class="list-group border-0 rounded-0">
+        ${feedsList.join('')}
+      </ul>
+    </div>
+  `;
+  elements.feedsContainer.innerHTML = html;
 };
-const renderError = (value) => {
-  if (value) {
+const renderPosts = (posts, elements, i18n) => {
+  const postsList = posts.map(({ id, title, link }) => {
+    const html = `
+      <li class="list-group-item d-flex justify-content-between align-items-start border-0 border-end-0">
+        <a
+          href="${link}"
+          class="fw-bold"
+          data-id="${id}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ${title}
+        </a>
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          data-id="${id}"
+          data-bs-toggle="modal"
+          data-bs-target="#modal"
+        >
+          ${i18n.t('posts.button')}
+        </button>
+      </li>
+    `;
+    return html;
+  });
+  const html = `
+    <div class="card border-0">
+      <div class="card-body">
+        <h2 class="card-title h4">${i18n.t('posts.title')}</h2>
+      </div>
+      <ul class="list-group border-0 rounded-0">
+        ${postsList.join('')}
+      </ul>
+    </div>
+  `;
+  elements.postsContainer.innerHTML = html;
+};
+const renderError = (error, elements, i18n) => {
+  if (error) {
     elements.input.classList.add('is-invalid');
     elements.feedbackContainer.classList.remove('text-success');
     elements.feedbackContainer.classList.add('text-danger');
-    elements.feedbackContainer.textContent = value;
+    elements.feedbackContainer.textContent = i18n.t(error);
   } else {
     elements.input.classList.remove('is-invalid');
     elements.feedbackContainer.textContent = '';
   }
 };
-export default (state, i18n) => onChange(state, (path, value) => {
+export default (state, elements, i18n) => onChange(state, (path, value) => {
+  if (path === 'feeds') {
+    renderFeeds(value, elements, i18n);
+  }
+  if (path === 'posts') {
+    renderPosts(value, elements, i18n);
+  }
   if (path === 'rssForm.error') {
-    renderError(value);
+    renderError(value, elements, i18n);
   }
   if (path === 'rssForm.state') {
     switch (value) {

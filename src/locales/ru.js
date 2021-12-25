@@ -9,5 +9,12 @@ export default {
         networkProblems: 'Ошибка сети',
       },
     },
+    feeds: {
+      title: 'Фиды',
+    },
+    posts: {
+      title: 'Посты',
+      button: 'Просмотр',
+    },
   },
 };
