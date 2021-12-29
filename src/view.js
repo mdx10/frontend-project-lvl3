@@ -24,13 +24,15 @@ const renderFeeds = (feeds, elements, i18n) => {
   `;
   elements.feedsContainer.innerHTML = html;
 };
-const renderPosts = (posts, elements, i18n) => {
+
+const renderPosts = (state, posts, elements, i18n) => {
   const postsList = posts.map(({ id, title, link }) => {
+    const classes = state.uiState.visitedPosts.includes(id) ? 'fw-normal link-secondary' : 'fw-bold';
     const html = `
       <li class="list-group-item d-flex justify-content-between align-items-start border-0 border-end-0">
         <a
           href="${link}"
-          class="fw-bold"
+          class="${classes}"
           data-id="${id}"
           target="_blank"
           rel="noopener noreferrer"
@@ -62,6 +64,7 @@ const renderPosts = (posts, elements, i18n) => {
   `;
   elements.postsContainer.innerHTML = html;
 };
+
 const renderError = (error, elements, i18n) => {
   if (error) {
     elements.input.classList.add('is-invalid');
@@ -73,12 +76,26 @@ const renderError = (error, elements, i18n) => {
     elements.feedbackContainer.textContent = '';
   }
 };
+
+const renderModal = (state, postId, elements) => {
+  const post = state.posts.find((item) => item.id === postId);
+  elements.modal.querySelector('.modal-title').textContent = post.title;
+  elements.modal.querySelector('.modal-body').textContent = post.description;
+  elements.modal.querySelector('a.btn').href = post.link;
+};
+
 export default (state, elements, i18n) => onChange(state, (path, value) => {
+  if (path === 'uiState.modalId') {
+    renderModal(state, value, elements);
+  }
+  if (path === 'uiState.visitedPosts') {
+    renderPosts(state, state.posts, elements, i18n);
+  }
   if (path === 'feeds') {
     renderFeeds(value, elements, i18n);
   }
   if (path === 'posts') {
-    renderPosts(value, elements, i18n);
+    renderPosts(state, value, elements, i18n);
   }
   if (path === 'rssForm.error') {
     renderError(value, elements, i18n);

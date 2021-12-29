@@ -59,6 +59,7 @@ export default () => {
     feedbackContainer: document.querySelector('.feedback'),
     postsContainer: document.querySelector('.posts'),
     feedsContainer: document.querySelector('.feeds'),
+    modal: document.querySelector('#modal'),
   };
   const state = {
     rssForm: {
@@ -67,6 +68,10 @@ export default () => {
     },
     feeds: [],
     posts: [],
+    uiState: {
+      visitedPosts: [],
+      modalId: null,
+    },
   };
   const i18n = i18next.createInstance();
   i18n.init({
@@ -111,5 +116,16 @@ export default () => {
         watchedState.rssForm.state = 'filling';
         console.log(state);
       });
+  });
+  elements.postsContainer.addEventListener('click', ({ target }) => {
+    if (target.closest('a')) {
+      const { id } = target.dataset;
+      watchedState.uiState.visitedPosts = [...state.uiState.visitedPosts, id];
+    }
+    if (target.closest('button')) {
+      const { id } = target.dataset;
+      watchedState.uiState.visitedPosts = [...state.uiState.visitedPosts, id];
+      watchedState.uiState.modalId = id;
+    }
   });
 };
