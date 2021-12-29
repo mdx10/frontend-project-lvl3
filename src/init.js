@@ -4,6 +4,7 @@ import _ from 'lodash';
 import initView from './view.js';
 import ru from './locales/ru.js';
 import validateUrl from './validator.js';
+import proxify from './proxy.js';
 
 const parseXml = (xml) => {
   const parsed = new DOMParser().parseFromString(xml, 'application/xml');
@@ -12,22 +13,43 @@ const parseXml = (xml) => {
   return parsed;
 };
 
-const getFeedData = (xmlDom) => {
-  const title = xmlDom.querySelector('channel title').textContent;
-  const description = xmlDom.querySelector('channel description').textContent;
-  return { title, description };
-};
+const getFeedAndPosts = (xmlDom) => {
+  const feed = {
+    title: xmlDom.querySelector('channel title').textContent,
+    description: xmlDom.querySelector('channel description').textContent,
+  };
 
-const getPostsData = (xmlDom) => {
   const posts = Array
     .from(xmlDom.querySelectorAll('item'))
-    .map((item) => {
-      const title = item.querySelector('title').textContent;
-      const description = item.querySelector('description').textContent;
-      const link = item.querySelector('link').textContent;
-      return { title, description, link };
-    });
-  return posts;
+    .map((item) => (
+      {
+        title: item.querySelector('title').textContent,
+        description: item.querySelector('description').textContent,
+        link: item.querySelector('link').textContent,
+      }
+    ));
+  return [feed, posts];
+};
+
+const updatePosts = (watchedState) => {
+  watchedState.feeds.forEach(({ url, id }) => {
+    axios.get(proxify(url))
+      .then(({ data }) => {
+        const parsedXml = parseXml(data.contents);
+        const [, posts] = getFeedAndPosts(parsedXml);
+        const oldPosts = [...watchedState.posts];
+        const addedPosts = _.differenceBy(posts, oldPosts, (post) => post.link);
+        if (addedPosts.length !== 0) {
+          console.log(addedPosts);
+          const newPosts = addedPosts.map((post) => ({ ...post, id: _.uniqueId(), feedId: id }));
+          console.log(newPosts);
+          // eslint-disable-next-line no-param-reassign
+          watchedState.posts = [...newPosts, ...oldPosts];
+        }
+      })
+      .catch((err) => console.log(err));
+  });
+  setTimeout(() => updatePosts(watchedState), 5000);
 };
 
 export default () => {
@@ -55,7 +77,7 @@ export default () => {
     },
   });
   const watchedState = initView(state, elements, i18n);
-
+  updatePosts(watchedState);
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
     const input = e.target.elements.url;
@@ -67,21 +89,16 @@ export default () => {
         watchedState.rssForm.error = null;
         watchedState.rssForm.state = 'processing';
         console.log(state);
+        console.log(new URL(validUrl));
         return validUrl;
       })
-      .then((feedUrl) => axios.get(`https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${feedUrl}`))
+      .then((feedUrl) => axios.get(proxify(feedUrl)))
       .then(({ data }) => {
         const parsedXml = parseXml(data.contents);
         console.dir(parsedXml);
-        const feedId = _.uniqueId();
-        const newFeed = {
-          id: feedId,
-          url,
-          ...getFeedData(parsedXml),
-        };
-        const newPosts = getPostsData(parsedXml)
-          .map((post) => ({ id: _.uniqueId(), feedId, ...post }));
-        console.log(newPosts);
+        const [feed, posts] = getFeedAndPosts(parsedXml);
+        const newFeed = { ...feed, id: _.uniqueId(), url };
+        const newPosts = posts.map((post) => ({ ...post, id: _.uniqueId(), feedId: newFeed.id }));
         watchedState.feeds = [newFeed, ...state.feeds];
         watchedState.posts = [...newPosts, ...state.posts];
         watchedState.rssForm.state = 'success';
