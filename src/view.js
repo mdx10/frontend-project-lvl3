@@ -104,21 +104,24 @@ export default (state, elements, i18n) => onChange(state, (path, value) => {
     switch (value) {
       case 'filling':
         elements.input.readOnly = false;
-        console.log('filling');
+        elements.button.disabled = false;
+        // console.log('filling');
         break;
       case 'processing':
         elements.input.readOnly = true;
+        elements.button.disabled = true;
         elements.feedbackContainer.textContent = '';
-        console.log('processing');
+        // console.log('processing');
         break;
       case 'success':
         elements.input.readOnly = false;
+        elements.button.disabled = false;
         elements.form.reset();
         elements.form.focus();
         elements.feedbackContainer.classList.remove('text-danger');
         elements.feedbackContainer.classList.add('text-success');
         elements.feedbackContainer.textContent = i18n.t('form.success');
-        console.log('success');
+        // console.log('success');
         break;
       default:
         break;

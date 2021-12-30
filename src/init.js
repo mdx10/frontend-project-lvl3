@@ -44,8 +44,8 @@ const updatePosts = (watchedState) => {
           // eslint-disable-next-line no-param-reassign
           watchedState.posts = [...newPosts, ...oldPosts];
         }
-      })
-      .catch((err) => console.log(err));
+      });
+    // .catch((err) => console.log(err));
   });
   setTimeout(() => updatePosts(watchedState), 5000);
 };
@@ -54,6 +54,7 @@ export default () => {
   const elements = {
     form: document.querySelector('form'),
     input: document.querySelector('#url-input'),
+    button: document.querySelector('button[type="submit"]'),
     feedbackContainer: document.querySelector('.feedback'),
     postsContainer: document.querySelector('.posts'),
     feedsContainer: document.querySelector('.feeds'),
@@ -91,28 +92,26 @@ export default () => {
       .then((validUrl) => {
         watchedState.rssForm.error = null;
         watchedState.rssForm.state = 'processing';
-        console.log(state);
-        console.log(new URL(validUrl));
+        // console.log(state);
         return validUrl;
       })
       .then((feedUrl) => axios.get(proxify(feedUrl)))
       .then(({ data }) => {
         const parsedXml = parseXml(data.contents);
-        console.dir(parsedXml);
         const [feed, posts] = getFeedAndPosts(parsedXml);
         const newFeed = { ...feed, id: _.uniqueId(), url };
         const newPosts = posts.map((post) => ({ ...post, id: _.uniqueId(), feedId: newFeed.id }));
         watchedState.feeds = [newFeed, ...state.feeds];
         watchedState.posts = [...newPosts, ...state.posts];
         watchedState.rssForm.state = 'success';
-        console.log(state);
+        // console.log(state);
       })
       .catch((err) => {
         watchedState.rssForm.error = err.isAxiosError
           ? 'form.errors.networkProblems'
           : err.message;
         watchedState.rssForm.state = 'filling';
-        console.log(state);
+        // console.log(state);
       });
   });
   elements.postsContainer.addEventListener('click', ({ target }) => {
