@@ -1,7 +1,7 @@
 export default {
   translation: {
     form: {
-      success: 'RSS успешно добавлен',
+      success: 'RSS успешно загружен',
       errors: {
         notUniqUrl: 'RSS уже существует',
         notValidUrl: 'Ссылка должна быть валидным URL',
