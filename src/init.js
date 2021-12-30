@@ -40,9 +40,7 @@ const updatePosts = (watchedState) => {
         const oldPosts = [...watchedState.posts];
         const addedPosts = _.differenceBy(posts, oldPosts, (post) => post.link);
         if (addedPosts.length !== 0) {
-          console.log(addedPosts);
           const newPosts = addedPosts.map((post) => ({ ...post, id: _.uniqueId(), feedId: id }));
-          console.log(newPosts);
           // eslint-disable-next-line no-param-reassign
           watchedState.posts = [...newPosts, ...oldPosts];
         }
