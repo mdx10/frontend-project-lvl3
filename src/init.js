@@ -1,53 +1,12 @@
 import i18next from 'i18next';
 import _ from 'lodash';
-import fetchData from './fetchData.js';
+import fetchData from './utils/fetchData.js';
 import initView from './view.js';
 import ru from './locales/ru.js';
-import validateUrl from './validator.js';
-
-const parseXml = (xml) => {
-  const parsed = new DOMParser().parseFromString(xml, 'application/xml');
-  const errorEl = parsed.querySelector('parsererror');
-  if (errorEl) throw new Error('form.errors.notValidRss');
-  return parsed;
-};
-
-const getFeedAndPosts = (xmlDom) => {
-  const feed = {
-    title: xmlDom.querySelector('channel title').textContent,
-    description: xmlDom.querySelector('channel description').textContent,
-  };
-
-  const posts = Array
-    .from(xmlDom.querySelectorAll('item'))
-    .map((item) => (
-      {
-        title: item.querySelector('title').textContent,
-        description: item.querySelector('description').textContent,
-        link: item.querySelector('link').textContent,
-      }
-    ));
-  return [feed, posts];
-};
-
-const updatePosts = (watchedState) => {
-  watchedState.feeds.forEach(({ url, id }) => {
-    fetchData(url)
-      .then(({ data }) => {
-        const parsedXml = parseXml(data.contents);
-        const [, posts] = getFeedAndPosts(parsedXml);
-        const oldPosts = [...watchedState.posts];
-        const addedPosts = _.differenceBy(posts, oldPosts, (post) => post.link);
-        if (addedPosts.length !== 0) {
-          const newPosts = addedPosts.map((post) => ({ ...post, id: _.uniqueId(), feedId: id }));
-          // eslint-disable-next-line no-param-reassign
-          watchedState.posts = [...newPosts, ...oldPosts];
-        }
-      });
-    // .catch((err) => console.log(err));
-  });
-  setTimeout(() => updatePosts(watchedState), 5000);
-};
+import validateUrl from './utils/validator.js';
+import parseXml from './utils/parser.js';
+import getFeedAndPosts from './utils/utils.js';
+import updatePosts from './utils/updater.js';
 
 export default () => {
   const elements = {
