@@ -1,11 +1,12 @@
 import * as yup from 'yup';
 
-export default (url, feeds, i18n) => {
+export default (url, addedUrls, i18n) => {
   yup.setLocale({
     string: {
       url: i18n.t('form.errors.notValidUrl'),
     },
     mixed: {
+      required: i18n.t('form.errors.required'),
       notOneOf: i18n.t('form.errors.notUniqUrl'),
     },
   });
@@ -14,7 +15,7 @@ export default (url, feeds, i18n) => {
     .string()
     .required()
     .url()
-    .notOneOf(feeds);
+    .notOneOf(addedUrls);
 
   return schema.validate(url);
 };

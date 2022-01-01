@@ -84,15 +84,14 @@ export default () => {
   updatePosts(watchedState);
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const input = e.target.elements.url;
-    const url = input.value;
+    const formData = new FormData(e.target);
+    const url = formData.get('url');
     watchedState.rssForm.state = 'filling';
-    const urls = state.feeds.map((feed) => feed.url);
-    validateUrl(url, urls, i18n)
+    const addedFeedsUrls = state.feeds.map((feed) => feed.url);
+    validateUrl(url, addedFeedsUrls, i18n)
       .then((validUrl) => {
         watchedState.rssForm.error = null;
         watchedState.rssForm.state = 'processing';
-        // console.log(state);
         return validUrl;
       })
       .then((feedUrl) => axios.get(proxify(feedUrl)))
@@ -104,14 +103,12 @@ export default () => {
         watchedState.feeds = [newFeed, ...state.feeds];
         watchedState.posts = [...newPosts, ...state.posts];
         watchedState.rssForm.state = 'success';
-        // console.log(state);
       })
       .catch((err) => {
         watchedState.rssForm.error = err.isAxiosError
           ? 'form.errors.networkProblems'
           : err.message;
         watchedState.rssForm.state = 'filling';
-        // console.log(state);
       });
   });
   elements.postsContainer.addEventListener('click', ({ target }) => {
