@@ -1,10 +1,9 @@
 import i18next from 'i18next';
-import axios from 'axios';
 import _ from 'lodash';
+import fetchData from './fetchData.js';
 import initView from './view.js';
 import ru from './locales/ru.js';
 import validateUrl from './validator.js';
-import proxify from './proxy.js';
 
 const parseXml = (xml) => {
   const parsed = new DOMParser().parseFromString(xml, 'application/xml');
@@ -33,7 +32,7 @@ const getFeedAndPosts = (xmlDom) => {
 
 const updatePosts = (watchedState) => {
   watchedState.feeds.forEach(({ url, id }) => {
-    axios.get(proxify(url))
+    fetchData(url)
       .then(({ data }) => {
         const parsedXml = parseXml(data.contents);
         const [, posts] = getFeedAndPosts(parsedXml);
@@ -84,9 +83,9 @@ export default () => {
   updatePosts(watchedState);
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
+    watchedState.rssForm.state = 'filling';
     const formData = new FormData(e.target);
     const url = formData.get('url');
-    watchedState.rssForm.state = 'filling';
     const addedFeedsUrls = state.feeds.map((feed) => feed.url);
     validateUrl(url, addedFeedsUrls, i18n)
       .then((validUrl) => {
@@ -94,7 +93,7 @@ export default () => {
         watchedState.rssForm.state = 'processing';
         return validUrl;
       })
-      .then((feedUrl) => axios.get(proxify(feedUrl)))
+      .then((feedUrl) => fetchData(feedUrl))
       .then(({ data }) => {
         const parsedXml = parseXml(data.contents);
         const [feed, posts] = getFeedAndPosts(parsedXml);
