@@ -22,6 +22,7 @@ export default () => {
     rssForm: {
       state: 'filling',
       error: null,
+      valid: true,
     },
     feeds: [],
     posts: [],
@@ -63,6 +64,7 @@ export default () => {
         watchedState.rssForm.state = 'success';
       })
       .catch((err) => {
+        watchedState.rssForm.valid = err.name !== 'ValidationError';
         watchedState.rssForm.error = err.isAxiosError
           ? 'form.errors.networkProblems'
           : err.message;

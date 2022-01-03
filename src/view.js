@@ -66,14 +66,11 @@ const renderPosts = (state, posts, elements, i18n) => {
 };
 
 const renderError = (error, elements, i18n) => {
+  elements.feedbackContainer.textContent = '';
   if (error) {
-    elements.input.classList.add('is-invalid');
     elements.feedbackContainer.classList.remove('text-success');
     elements.feedbackContainer.classList.add('text-danger');
     elements.feedbackContainer.textContent = i18n.t(error);
-  } else {
-    elements.input.classList.remove('is-invalid');
-    elements.feedbackContainer.textContent = '';
   }
 };
 
@@ -84,47 +81,58 @@ const renderModal = (state, postId, elements) => {
   elements.modal.querySelector('a.btn').href = post.link;
 };
 
+const handleProcessState = (processState, elements, i18n) => {
+  switch (processState) {
+    case 'filling':
+      elements.input.readOnly = false;
+      elements.button.disabled = false;
+      break;
+    case 'processing':
+      elements.input.readOnly = true;
+      elements.button.disabled = true;
+      break;
+    case 'success':
+      elements.input.readOnly = false;
+      elements.button.disabled = false;
+      elements.form.reset();
+      elements.form.focus();
+      elements.feedbackContainer.classList.remove('text-danger');
+      elements.feedbackContainer.classList.add('text-success');
+      elements.feedbackContainer.textContent = i18n.t('form.success');
+      break;
+    default:
+      throw new Error(`Unknown process state: ${processState}`);
+  }
+};
+
 export default (state, elements, i18n) => onChange(state, (path, value) => {
-  if (path === 'uiState.modalId') {
-    renderModal(state, value, elements);
-  }
-  if (path === 'uiState.visitedPosts') {
-    renderPosts(state, state.posts, elements, i18n);
-  }
-  if (path === 'feeds') {
-    renderFeeds(value, elements, i18n);
-  }
-  if (path === 'posts') {
-    renderPosts(state, value, elements, i18n);
-  }
-  if (path === 'rssForm.error') {
-    renderError(value, elements, i18n);
-  }
-  if (path === 'rssForm.state') {
-    switch (value) {
-      case 'filling':
-        elements.input.readOnly = false;
-        elements.button.disabled = false;
-        // console.log('filling');
-        break;
-      case 'processing':
-        elements.input.readOnly = true;
-        elements.button.disabled = true;
-        elements.feedbackContainer.textContent = '';
-        // console.log('processing');
-        break;
-      case 'success':
-        elements.input.readOnly = false;
-        elements.button.disabled = false;
-        elements.form.reset();
-        elements.form.focus();
-        elements.feedbackContainer.classList.remove('text-danger');
-        elements.feedbackContainer.classList.add('text-success');
-        elements.feedbackContainer.textContent = i18n.t('form.success');
-        // console.log('success');
-        break;
-      default:
-        break;
-    }
+  switch (path) {
+    case 'uiState.modalId':
+      renderModal(state, value, elements);
+      break;
+    case 'uiState.visitedPosts':
+      renderPosts(state, state.posts, elements, i18n);
+      break;
+    case 'feeds':
+      renderFeeds(value, elements, i18n);
+      break;
+    case 'posts':
+      renderPosts(state, value, elements, i18n);
+      break;
+    case 'rssForm.error':
+      renderError(value, elements, i18n);
+      break;
+    case 'rssForm.valid':
+      if (!value) {
+        elements.input.classList.add('is-invalid');
+        return;
+      }
+      elements.input.classList.remove('is-invalid');
+      break;
+    case 'rssForm.state':
+      handleProcessState(value, elements, i18n);
+      break;
+    default:
+      throw new Error(`Unknown path: ${path}`);
   }
 });
