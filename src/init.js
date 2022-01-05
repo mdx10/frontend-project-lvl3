@@ -40,7 +40,6 @@ export default () => {
     },
   });
   const watchedState = initView(state, elements, i18n);
-  updatePosts(watchedState);
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
     watchedState.rssForm.state = 'filling';
@@ -51,9 +50,8 @@ export default () => {
       .then((validUrl) => {
         watchedState.rssForm.error = null;
         watchedState.rssForm.state = 'processing';
-        return validUrl;
+        return fetchData(validUrl);
       })
-      .then((feedUrl) => fetchData(feedUrl))
       .then(({ data }) => {
         const parsedXml = parseXml(data.contents);
         const [feed, posts] = getFeedAndPosts(parsedXml);
@@ -82,4 +80,5 @@ export default () => {
       watchedState.uiState.modalId = id;
     }
   });
+  setTimeout(() => updatePosts(watchedState), 5000);
 };
